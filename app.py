@@ -136,6 +136,89 @@ def is_admin() -> bool:
     return bool(session.get("is_admin"))
 
 
+def is_streamlit_runtime() -> bool:
+    try:
+        from streamlit.runtime.scriptrunner import get_script_run_ctx
+    except ModuleNotFoundError:
+        return False
+
+    return get_script_run_ctx(suppress_warning=True) is not None
+
+
+def render_streamlit_portfolio() -> None:
+    import streamlit as st
+
+    content = load_content()
+    profile = content.get("profile", {})
+
+    st.set_page_config(
+        page_title=profile.get("name", "Portfolio"),
+        page_icon="💼",
+        layout="wide",
+    )
+
+    st.title(profile.get("name", "Portfolio"))
+    headline = profile.get("headline")
+    if headline:
+        st.subheader(headline)
+
+    contact = [
+        profile.get("location"),
+        profile.get("email"),
+        profile.get("phone"),
+    ]
+    st.caption(" | ".join(item for item in contact if item))
+
+    about = profile.get("about")
+    if about:
+        st.markdown("### About")
+        st.write(about)
+
+    skills = content.get("skills", [])
+    if skills:
+        st.markdown("### Skills")
+        st.write(", ".join(skills))
+
+    experience = content.get("experience", [])
+    if experience:
+        st.markdown("### Experience")
+        for item in experience:
+            role = item.get("role", "")
+            organization = item.get("organization", "")
+            period = item.get("period", "")
+            st.markdown(f"**{role}**")
+            st.caption(" | ".join(part for part in [organization, period] if part))
+            for bullet in item.get("bullets", []):
+                st.markdown(f"- {bullet}")
+
+    responsibilities = content.get("responsibilities", [])
+    if responsibilities:
+        st.markdown("### Responsibilities")
+        for item in responsibilities:
+            st.markdown(f"- {item}")
+
+    education = content.get("education", [])
+    if education:
+        st.markdown("### Education")
+        for item in education:
+            institution = item.get("institution", "")
+            qualification = item.get("qualification", "")
+            year = item.get("year", "")
+            st.markdown(f"- **{qualification}**, {institution} ({year})")
+
+    certifications = content.get("certifications", [])
+    if certifications:
+        st.markdown("### Certifications")
+        for item in certifications:
+            st.markdown(f"- {item}")
+
+    referees = content.get("referees", [])
+    if referees:
+        st.markdown("### Referees")
+        for item in referees:
+            st.markdown(f"- {item}")
+
+
 @app.get("/")
 def portfolio():
     return render_template("index.html", content=load_content())
@@ -209,5 +292,7 @@ def admin_panel():
     )
 
 
-if __name__ == "__main__":
-    app.run(debug=True)
+if is_streamlit_runtime():
+    render_streamlit_portfolio()
+elif __name__ == "__main__":
+    app.run(debug=os.environ.get("FLASK_DEBUG") == "1", use_reloader=False)
