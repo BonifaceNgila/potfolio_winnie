@@ -158,9 +158,23 @@ def _get_streamlit_view_mode(st) -> str:
         return values[0] if values else "portfolio"
 
 
+def _set_streamlit_view_mode(st, mode: str) -> None:
+    try:
+        st.query_params["view"] = mode
+    except AttributeError:
+        st.experimental_set_query_params(view=mode)
+
+
 def render_streamlit_admin_panel(st) -> None:
     st.markdown("# Portfolio Admin")
-    st.markdown("[View Portfolio](?view=portfolio)")
+    top_col1, top_col2 = st.columns([1, 1])
+    with top_col1:
+        if st.button("Back to Portfolio"):
+            _set_streamlit_view_mode(st, "portfolio")
+            st.rerun()
+    with top_col2:
+        if st.button("Refresh Data"):
+            st.rerun()
 
     if "streamlit_is_admin" not in st.session_state:
         st.session_state["streamlit_is_admin"] = False
@@ -296,9 +310,19 @@ def render_streamlit_portfolio() -> None:
         unsafe_allow_html=True,
     )
 
-    if _get_streamlit_view_mode(st) == "admin":
+    current_view = _get_streamlit_view_mode(st)
+
+    if current_view == "admin":
         render_streamlit_admin_panel(st)
         return
+
+    nav_col1, nav_col2 = st.columns([1, 4])
+    with nav_col1:
+        if st.button("Manage Details"):
+            _set_streamlit_view_mode(st, "admin")
+            st.rerun()
+    with nav_col2:
+        st.caption("Use Manage Details to open the admin editor.")
 
     template_env = Environment(
         loader=FileSystemLoader(str(BASE_DIR / "templates")),
