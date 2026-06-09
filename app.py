@@ -4,6 +4,7 @@ import secrets
 from pathlib import Path
 
 from flask import Flask, flash, redirect, render_template, request, session, url_for
+from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_FILE = BASE_DIR / "data" / "content.json"
@@ -147,6 +148,7 @@ def is_streamlit_runtime() -> bool:
 
 def render_streamlit_portfolio() -> None:
     import streamlit as st
+    import streamlit.components.v1 as components
 
     content = load_content()
     profile = content.get("profile", {})
@@ -157,66 +159,64 @@ def render_streamlit_portfolio() -> None:
         layout="wide",
     )
 
-    st.title(profile.get("name", "Portfolio"))
-    headline = profile.get("headline")
-    if headline:
-        st.subheader(headline)
+    st.markdown(
+        """
+        <style>
+          [data-testid="stHeader"], [data-testid="stToolbar"], [data-testid="stDecoration"], [data-testid="stStatusWidget"] {
+            display: none;
+          }
+          [data-testid="stAppViewContainer"] > .main {
+            padding-top: 0;
+          }
+          [data-testid="stSidebar"] {
+            display: none;
+          }
+          .block-container {
+            padding: 0 !important;
+            max-width: 100% !important;
+          }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
 
-    contact = [
-        profile.get("location"),
-        profile.get("email"),
-        profile.get("phone"),
-    ]
-    st.caption(" | ".join(item for item in contact if item))
+    template_env = Environment(
+        loader=FileSystemLoader(str(BASE_DIR / "templates")),
+        autoescape=select_autoescape(["html", "xml"]),
+    )
+    template = template_env.get_template("index.html")
 
-    about = profile.get("about")
-    if about:
-        st.markdown("### About")
-        st.write(about)
+    def streamlit_url_for(endpoint: str, filename: str | None = None) -> str:
+        if endpoint == "static" and filename == "styles.css":
+            return "__STATIC_STYLES__"
+        if endpoint == "static" and filename == "script.js":
+            return "__STATIC_SCRIPT__"
+        if endpoint == "admin_login":
+            return "#"
+        return "#"
 
-    skills = content.get("skills", [])
-    if skills:
-        st.markdown("### Skills")
-        st.write(", ".join(skills))
+    rendered = template.render(content=content, url_for=streamlit_url_for)
+    css_text = (BASE_DIR / "static" / "styles.css").read_text(encoding="utf-8")
+    js_text = (BASE_DIR / "static" / "script.js").read_text(encoding="utf-8")
 
-    experience = content.get("experience", [])
-    if experience:
-        st.markdown("### Experience")
-        for item in experience:
-            role = item.get("role", "")
-            organization = item.get("organization", "")
-            period = item.get("period", "")
-            st.markdown(f"**{role}**")
-            st.caption(" | ".join(part for part in [organization, period] if part))
-            for bullet in item.get("bullets", []):
-                st.markdown(f"- {bullet}")
+    rendered = rendered.replace(
+        '<link rel="stylesheet" href="__STATIC_STYLES__" />',
+        f"<style>{css_text}</style>",
+    )
+    rendered = rendered.replace(
+        '<script src="__STATIC_SCRIPT__"></script>',
+        f"<script>{js_text}</script>",
+    )
 
-    responsibilities = content.get("responsibilities", [])
-    if responsibilities:
-        st.markdown("### Responsibilities")
-        for item in responsibilities:
-            st.markdown(f"- {item}")
+    estimated_height = 1500
+    estimated_height += len(content.get("experience", [])) * 220
+    estimated_height += len(content.get("skills", [])) * 16
+    estimated_height += len(content.get("education", [])) * 120
+    estimated_height += len(content.get("certifications", [])) * 40
+    estimated_height += len(content.get("responsibilities", [])) * 40
+    estimated_height += len(content.get("referees", [])) * 40
 
-    education = content.get("education", [])
-    if education:
-        st.markdown("### Education")
-        for item in education:
-            institution = item.get("institution", "")
-            qualification = item.get("qualification", "")
-            year = item.get("year", "")
-            st.markdown(f"- **{qualification}**, {institution} ({year})")
-
-    certifications = content.get("certifications", [])
-    if certifications:
-        st.markdown("### Certifications")
-        for item in certifications:
-            st.markdown(f"- {item}")
-
-    referees = content.get("referees", [])
-    if referees:
-        st.markdown("### Referees")
-        for item in referees:
-            st.markdown(f"- {item}")
+    components.html(rendered, height=max(1800, estimated_height), scrolling=True)
 
 
 @app.get("/")
