@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ content.profile.name }} | Portfolio</title>
+  <meta name="description" content="Portfolio of {{ content.profile.name }}" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+</head>
+<body>
+  <div class="background-glow" aria-hidden="true"></div>
+
+  <header class="site-header" id="top">
+    <nav class="nav container">
+      <a href="#top" class="brand">WM</a>
+      <button class="menu-toggle" aria-label="Toggle menu" aria-expanded="false">Menu</button>
+      <ul class="nav-links">
+        <li><a href="#about">About</a></li>
+        {% if content.skills %}
+        <li><a href="#skills">Skills</a></li>
+        {% endif %}
+        {% if content.experience %}
+        <li><a href="#experience">Experience</a></li>
+        {% endif %}
+        {% if content.education %}
+        <li><a href="#education">Education</a></li>
+        {% endif %}
+        {% if content.certifications %}
+        <li><a href="#certifications">Training</a></li>
+        {% endif %}
+        {% if content.responsibilities %}
+        <li><a href="#leadership">Leadership</a></li>
+        {% endif %}
+        <li><a href="#contact">Contact</a></li>
+        {% if content.referees %}
+        <li><a href="#referees">Referees</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero container reveal">
+      <p class="eyebrow">Portfolio</p>
+      <h1>{{ content.profile.name }}</h1>
+      <p class="lead">{{ content.profile.headline }}</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="#contact">Contact Me</a>
+        <a class="btn btn-secondary" href="#experience">View Experience</a>
+      </div>
+    </section>
+
+    <section class="section container reveal" id="about">
+      <h2>About</h2>
+      {% for paragraph in content.profile.about.split('\n') %}
+        {% if paragraph.strip() %}
+        <p>{{ paragraph }}</p>
+        {% endif %}
+      {% endfor %}
+    </section>
+
+    {% if content.skills %}
+    <section class="section container reveal" id="skills">
+      <h2>Core Skills</h2>
+      <div class="chip-grid">
+        {% for skill in content.skills %}
+        <span class="chip">{{ skill }}</span>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    {% if content.experience %}
+    <section class="section container reveal" id="experience">
+      <h2>Experience</h2>
+      {% for exp in content.experience %}
+      <article class="card">
+        <div class="card-head">
+          <h3>{{ exp.role }}</h3>
+          <p class="muted">{{ exp.organization }} | {{ exp.period }}</p>
+        </div>
+        <ul>
+          {% for bullet in exp.bullets %}
+          <li>{{ bullet }}</li>
+          {% endfor %}
+        </ul>
+      </article>
+      {% endfor %}
+    </section>
+    {% endif %}
+
+    {% if content.education %}
+    <section class="section container reveal" id="education">
+      <h2>Education</h2>
+      {% for edu in content.education %}
+      <article class="card">
+        <div class="card-head">
+          <h3>{{ edu.qualification }}</h3>
+          <p class="muted">{{ edu.institution }} | {{ edu.year }}</p>
+        </div>
+      </article>
+      {% endfor %}
+    </section>
+    {% endif %}
+
+    {% if content.certifications %}
+    <section class="section container reveal" id="certifications">
+      <h2>Certifications & Training</h2>
+      <article class="card">
+        <ul>
+          {% for item in content.certifications %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+      </article>
+    </section>
+    {% endif %}
+
+    {% if content.responsibilities %}
+    <section class="section container reveal" id="leadership">
+      <h2>Other Responsibilities</h2>
+      <article class="card">
+        <ul>
+          {% for item in content.responsibilities %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+      </article>
+    </section>
+    {% endif %}
+
+    <section class="section container reveal" id="contact">
+      <h2>Contact</h2>
+      <div class="contact-grid">
+        <a class="contact-item" href="mailto:{{ content.profile.email }}">
+          <span>Email</span>
+          <strong>{{ content.profile.email }}</strong>
+        </a>
+        <a class="contact-item" href="tel:{{ content.profile.phone|replace(' ', '') }}">
+          <span>Phone</span>
+          <strong>{{ content.profile.phone }}</strong>
+        </a>
+        <div class="contact-item">
+          <span>Location</span>
+          <strong>{{ content.profile.location }}</strong>
+        </div>
+      </div>
+    </section>
+
+    {% if content.referees %}
+    <section class="section container reveal" id="referees">
+      <h2>Referees</h2>
+      <article class="card">
+        <ul>
+          {% for item in content.referees %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+      </article>
+    </section>
+    {% endif %}
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>© <span id="year"></span> {{ content.profile.name }}. All rights reserved. <a href="{{ url_for('admin_login') }}">Admin</a></p>
+    </div>
+  </footer>
+
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

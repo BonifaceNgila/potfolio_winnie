@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+</head>
+<body class="admin-page">
+  <main class="container admin-wrap">
+    <section class="card admin-card">
+      <div class="admin-topbar">
+        <h1>Portfolio Admin</h1>
+        <div>
+          <a class="btn btn-secondary" href="{{ url_for('portfolio') }}">View Site</a>
+          <a class="btn btn-secondary" href="{{ url_for('admin_logout') }}">Logout</a>
+        </div>
+      </div>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="flash-wrap">
+            {% for category, message in messages %}
+              <p class="flash {{ category }}">{{ message }}</p>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      <form method="post" class="admin-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+
+        <h2>Profile</h2>
+        <label for="name">Name</label>
+        <input id="name" name="name" value="{{ content.profile.name }}" required />
+
+        <label for="headline">Headline</label>
+        <textarea id="headline" name="headline" rows="2" required>{{ content.profile.headline }}</textarea>
+
+        <label for="about">About</label>
+        <textarea id="about" name="about" rows="5" required>{{ content.profile.about }}</textarea>
+
+        <div class="admin-grid">
+          <div>
+            <label for="location">Location</label>
+            <input id="location" name="location" value="{{ content.profile.location }}" required />
+          </div>
+          <div>
+            <label for="email">Email</label>
+            <input id="email" type="email" name="email" value="{{ content.profile.email }}" required />
+          </div>
+          <div>
+            <label for="phone">Phone</label>
+            <input id="phone" name="phone" value="{{ content.profile.phone }}" required />
+          </div>
+        </div>
+
+        <h2>Skills (one per line)</h2>
+        <textarea name="skills" rows="8">{{ skills_text }}</textarea>
+
+        <h2>Experience</h2>
+        <p class="muted small-text">Use one blank line between roles. First three lines are role, organization, and period. Add achievements or duties below as plain lines.</p>
+        <textarea name="experience_text" rows="22">{{ experience_text }}</textarea>
+
+        <h2>Education</h2>
+        <p class="muted small-text">Use one credential per line, for example: St. Paul’s University – Master of Development Studies (Community Development), 2020.</p>
+        <textarea name="education_text" rows="6">{{ education_text }}</textarea>
+
+        <h2>Certifications & Training (one per line)</h2>
+        <textarea name="certifications" rows="8">{{ certifications_text }}</textarea>
+
+        <h2>Other Responsibilities (one per line)</h2>
+        <textarea name="responsibilities" rows="5">{{ responsibilities_text }}</textarea>
+
+        <h2>Referees (one per line)</h2>
+        <textarea name="referees" rows="3">{{ referees_text }}</textarea>
+
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+      </form>
+    </section>
+  </main>
+</body>
+</html>
