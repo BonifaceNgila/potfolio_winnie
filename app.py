@@ -354,15 +354,8 @@ def render_streamlit_portfolio() -> None:
         f"<script>{js_text}</script>",
     )
 
-    estimated_height = 1500
-    estimated_height += len(content.get("experience", [])) * 220
-    estimated_height += len(content.get("skills", [])) * 16
-    estimated_height += len(content.get("education", [])) * 120
-    estimated_height += len(content.get("certifications", [])) * 40
-    estimated_height += len(content.get("responsibilities", [])) * 40
-    estimated_height += len(content.get("referees", [])) * 40
-
-    components.html(rendered, height=max(1800, estimated_height), scrolling=True)
+    # Keep the embedded page internally scrollable so in-page anchor links work.
+    components.html(rendered, height=900, scrolling=True)
 
 
 @app.get("/")
