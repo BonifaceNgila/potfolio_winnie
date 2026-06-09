@@ -146,6 +146,122 @@ def is_streamlit_runtime() -> bool:
     return get_script_run_ctx(suppress_warning=True) is not None
 
 
+def _get_streamlit_view_mode(st) -> str:
+    try:
+        value = st.query_params.get("view", "portfolio")
+        if isinstance(value, list):
+            return value[0] if value else "portfolio"
+        return value or "portfolio"
+    except AttributeError:
+        params = st.experimental_get_query_params()
+        values = params.get("view", ["portfolio"])
+        return values[0] if values else "portfolio"
+
+
+def render_streamlit_admin_panel(st) -> None:
+    st.markdown("# Portfolio Admin")
+    st.markdown("[View Portfolio](?view=portfolio)")
+
+    if "streamlit_is_admin" not in st.session_state:
+        st.session_state["streamlit_is_admin"] = False
+
+    if not st.session_state.get("streamlit_is_admin", False):
+        with st.form("streamlit_admin_login"):
+            password = st.text_input("Admin password", type="password")
+            login_submitted = st.form_submit_button("Login")
+
+        if login_submitted:
+            if secrets.compare_digest(password, ADMIN_PASSWORD):
+                st.session_state["streamlit_is_admin"] = True
+                st.success("Login successful.")
+                st.rerun()
+            else:
+                st.error("Invalid password.")
+
+        return
+
+    if st.button("Logout"):
+        st.session_state["streamlit_is_admin"] = False
+        st.success("Logged out.")
+        st.rerun()
+
+    content = load_content()
+    profile = content.get("profile", {})
+
+    st.caption("Edit content below and click Save Changes.")
+
+    with st.form("streamlit_admin_editor"):
+        name = st.text_input("Name", value=profile.get("name", "")).strip()
+        headline = st.text_area("Headline", value=profile.get("headline", ""), height=80).strip()
+        about = st.text_area("About", value=profile.get("about", ""), height=180).strip()
+
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            location = st.text_input("Location", value=profile.get("location", "")).strip()
+        with col2:
+            email = st.text_input("Email", value=profile.get("email", "")).strip()
+        with col3:
+            phone = st.text_input("Phone", value=profile.get("phone", "")).strip()
+
+        skills_text = st.text_area(
+            "Skills (one per line)",
+            value="\n".join(content.get("skills", [])),
+            height=140,
+        )
+        experience_text = st.text_area(
+            "Experience (one blank line between roles; first 3 lines role, organization, period)",
+            value=format_experience_text(content.get("experience", [])),
+            height=340,
+        )
+        education_text = st.text_area(
+            "Education (one per line: Institution – Qualification, Year)",
+            value=format_education_text(content.get("education", [])),
+            height=120,
+        )
+        certifications_text = st.text_area(
+            "Certifications & Training (one per line)",
+            value="\n".join(content.get("certifications", [])),
+            height=140,
+        )
+        responsibilities_text = st.text_area(
+            "Other Responsibilities (one per line)",
+            value="\n".join(content.get("responsibilities", [])),
+            height=120,
+        )
+        referees_text = st.text_area(
+            "Referees (one per line)",
+            value="\n".join(content.get("referees", [])),
+            height=100,
+        )
+
+        save_submitted = st.form_submit_button("Save Changes")
+
+    if not save_submitted:
+        return
+
+    try:
+        updated = {
+            "profile": {
+                "name": name,
+                "headline": headline,
+                "about": about,
+                "location": location,
+                "email": email,
+                "phone": phone,
+            },
+            "skills": parse_lines(skills_text),
+            "experience": parse_experience_text(experience_text),
+            "education": parse_education_text(education_text),
+            "certifications": parse_lines(certifications_text),
+            "responsibilities": parse_lines(responsibilities_text),
+            "referees": parse_lines(referees_text),
+        }
+        save_content(updated)
+        st.success("Portfolio content updated successfully.")
+    except (ValueError, json.JSONDecodeError) as error:
+        st.error(f"Could not save changes: {error}")
+
+
 def render_streamlit_portfolio() -> None:
     import streamlit as st
     import streamlit.components.v1 as components
@@ -180,6 +296,10 @@ def render_streamlit_portfolio() -> None:
         unsafe_allow_html=True,
     )
 
+    if _get_streamlit_view_mode(st) == "admin":
+        render_streamlit_admin_panel(st)
+        return
+
     template_env = Environment(
         loader=FileSystemLoader(str(BASE_DIR / "templates")),
         autoescape=select_autoescape(["html", "xml"]),
@@ -192,7 +312,9 @@ def render_streamlit_portfolio() -> None:
         if endpoint == "static" and filename == "script.js":
             return "__STATIC_SCRIPT__"
         if endpoint == "admin_login":
-            return "#"
+            return "?view=admin"
+        if endpoint == "portfolio":
+            return "?view=portfolio"
         return "#"
 
     rendered = template.render(content=content, url_for=streamlit_url_for)
