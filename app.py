@@ -108,6 +108,22 @@ def parse_education_text(text: str) -> list[dict]:
     return parsed
 
 
+def parse_impact_metrics_text(text: str) -> list[dict]:
+    parsed = []
+
+    for line in parse_lines(text):
+        if "|" not in line:
+            raise ValueError("Impact metrics should look like: value | label.")
+
+        value, label = [part.strip() for part in line.split("|", 1)]
+        if not value or not label:
+            raise ValueError("Each impact metric needs both a value and a label.")
+
+        parsed.append({"value": value, "label": label})
+
+    return parsed
+
+
 def format_experience_text(experience: list[dict]) -> str:
     blocks = []
     for item in experience:
@@ -129,6 +145,17 @@ def format_education_text(education: list[dict]) -> str:
         qualification = str(item.get("qualification", "")).strip()
         year = str(item.get("year", "")).strip()
         lines.append(f"{institution} – {qualification}, {year}")
+
+    return "\n".join(lines)
+
+
+def format_impact_metrics_text(metrics: list[dict]) -> str:
+    lines = []
+    for item in metrics:
+        value = str(item.get("value", "")).strip()
+        label = str(item.get("label", "")).strip()
+        if value or label:
+            lines.append(f"{value} | {label}")
 
     return "\n".join(lines)
 
@@ -222,6 +249,16 @@ def render_streamlit_admin_panel(st) -> None:
             value="\n".join(content.get("skills", [])),
             height=140,
         )
+        impact_metrics_text = st.text_area(
+            "Impact Metrics (one per line: value | label)",
+            value=format_impact_metrics_text(content.get("impact_metrics", [])),
+            height=120,
+        )
+        sector_focus_text = st.text_area(
+            "NGO Sector Focus (one per line)",
+            value="\n".join(content.get("sector_focus", [])),
+            height=140,
+        )
         experience_text = st.text_area(
             "Experience (one blank line between roles; first 3 lines role, organization, period)",
             value=format_experience_text(content.get("experience", [])),
@@ -264,6 +301,8 @@ def render_streamlit_admin_panel(st) -> None:
                 "phone": phone,
             },
             "skills": parse_lines(skills_text),
+            "impact_metrics": parse_impact_metrics_text(impact_metrics_text),
+            "sector_focus": parse_lines(sector_focus_text),
             "experience": parse_experience_text(experience_text),
             "education": parse_education_text(education_text),
             "certifications": parse_lines(certifications_text),
@@ -404,6 +443,8 @@ def admin_panel():
                 "phone": request.form.get("phone", "").strip(),
             }
             content["skills"] = parse_lines(request.form.get("skills", ""))
+            content["impact_metrics"] = parse_impact_metrics_text(request.form.get("impact_metrics", ""))
+            content["sector_focus"] = parse_lines(request.form.get("sector_focus", ""))
             content["experience"] = parse_experience_text(request.form.get("experience_text", ""))
             content["education"] = parse_education_text(request.form.get("education_text", ""))
             content["certifications"] = parse_lines(request.form.get("certifications", ""))
@@ -422,6 +463,8 @@ def admin_panel():
         "admin_panel.html",
         content=content,
         skills_text="\n".join(content.get("skills", [])),
+        impact_metrics_text=format_impact_metrics_text(content.get("impact_metrics", [])),
+        sector_focus_text="\n".join(content.get("sector_focus", [])),
         certifications_text="\n".join(content.get("certifications", [])),
         responsibilities_text="\n".join(content.get("responsibilities", [])),
         referees_text="\n".join(content.get("referees", [])),

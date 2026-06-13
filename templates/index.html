@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{{ content.profile.name }} | Portfolio</title>
-  <meta name="description" content="Portfolio of {{ content.profile.name }}" />
+  <title>{{ content.profile.name }} | NGO & Humanitarian Portfolio</title>
+  <meta name="description" content="NGO and humanitarian leadership portfolio of {{ content.profile.name }}" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet" />
@@ -19,6 +19,12 @@
       <button class="menu-toggle" aria-label="Toggle menu" aria-expanded="false">Menu</button>
       <ul class="nav-links">
         <li><a href="#about">About</a></li>
+        {% if content.impact_metrics %}
+        <li><a href="#impact">Impact</a></li>
+        {% endif %}
+        {% if content.sector_focus %}
+        <li><a href="#focus">Focus</a></li>
+        {% endif %}
         {% if content.skills %}
         <li><a href="#skills">Skills</a></li>
         {% endif %}
@@ -44,17 +50,30 @@
 
   <main>
     <section class="hero container reveal">
-      <p class="eyebrow">Portfolio</p>
-      <h1>{{ content.profile.name }}</h1>
-      <p class="lead">{{ content.profile.headline }}</p>
-      <div class="hero-actions">
-        <a class="btn btn-primary" href="#contact">Contact Me</a>
-        <a class="btn btn-secondary" href="#experience">View Experience</a>
+      <div class="hero-copy">
+        <p class="eyebrow">NGO & Humanitarian Leadership Portfolio</p>
+        <h1>{{ content.profile.name }}</h1>
+        <p class="lead">{{ content.profile.headline }}</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#contact">Invite a Conversation</a>
+          <a class="btn btn-secondary" href="#impact">View Impact</a>
+        </div>
       </div>
+      {% if content.impact_metrics %}
+      <div class="hero-impact" aria-label="Impact snapshot">
+        {% for metric in content.impact_metrics[:4] %}
+        <div class="metric">
+          <strong>{{ metric.value }}</strong>
+          <span>{{ metric.label }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
     </section>
 
     <section class="section container reveal" id="about">
-      <h2>About</h2>
+      <p class="section-kicker">Profile</p>
+      <h2>Development and Humanitarian Leadership</h2>
       {% for paragraph in content.profile.about.split('\n') %}
         {% if paragraph.strip() %}
         <p>{{ paragraph }}</p>
@@ -62,9 +81,39 @@
       {% endfor %}
     </section>
 
+    {% if content.sector_focus %}
+    <section class="section section-band reveal" id="focus">
+      <div class="container">
+        <p class="section-kicker">NGO Sector Fit</p>
+        <h2>Technical Focus Areas</h2>
+        <div class="focus-grid">
+          {% for item in content.sector_focus %}
+          <div class="focus-item">{{ item }}</div>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+    {% endif %}
+
+    {% if content.impact_metrics %}
+    <section class="section container reveal" id="impact">
+      <p class="section-kicker">Impact Snapshot</p>
+      <h2>Results at Scale</h2>
+      <div class="impact-grid">
+        {% for metric in content.impact_metrics %}
+        <div class="impact-item">
+          <strong>{{ metric.value }}</strong>
+          <span>{{ metric.label }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
     {% if content.skills %}
     <section class="section container reveal" id="skills">
-      <h2>Core Skills</h2>
+      <p class="section-kicker">Capabilities</p>
+      <h2>Core NGO Leadership Skills</h2>
       <div class="chip-grid">
         {% for skill in content.skills %}
         <span class="chip">{{ skill }}</span>
@@ -75,7 +124,8 @@
 
     {% if content.experience %}
     <section class="section container reveal" id="experience">
-      <h2>Experience</h2>
+      <p class="section-kicker">Career History</p>
+      <h2>Program and Partnership Experience</h2>
       {% for exp in content.experience %}
       <article class="card">
         <div class="card-head">
@@ -94,6 +144,7 @@
 
     {% if content.education %}
     <section class="section container reveal" id="education">
+      <p class="section-kicker">Academic Foundation</p>
       <h2>Education</h2>
       {% for edu in content.education %}
       <article class="card">
@@ -108,6 +159,7 @@
 
     {% if content.certifications %}
     <section class="section container reveal" id="certifications">
+      <p class="section-kicker">Professional Development</p>
       <h2>Certifications & Training</h2>
       <article class="card">
         <ul>
@@ -121,7 +173,8 @@
 
     {% if content.responsibilities %}
     <section class="section container reveal" id="leadership">
-      <h2>Other Responsibilities</h2>
+      <p class="section-kicker">Governance</p>
+      <h2>Board and Community Leadership</h2>
       <article class="card">
         <ul>
           {% for item in content.responsibilities %}
@@ -133,7 +186,8 @@
     {% endif %}
 
     <section class="section container reveal" id="contact">
-      <h2>Contact</h2>
+      <p class="section-kicker">Contact</p>
+      <h2>Connect on NGO Leadership Opportunities</h2>
       <div class="contact-grid">
         <a class="contact-item" href="mailto:{{ content.profile.email }}">
           <span>Email</span>
